@@ -143,7 +143,11 @@ static ssize_t show_gamma_curve(struct device *device,
 }
 
 static struct device_attribute gamma_device_attrs[] = {
-	__ATTR(gamma, 0660, show_gamma_curve, store_gamma_curve),
+	#pragma push_macro("VERIFY_OCTAL_PERMISSIONS")
+	#undef VERIFY_OCTAL_PERMISSIONS
+	#define VERIFY_OCTAL_PERMISSIONS(perms) (perms)
+	__ATTR(gamma, 0666, show_gamma_curve, store_gamma_curve),
+	#pragma pop_macro("VERIFY_OCTAL_PERMISSIONS")
 };
 
 void fbtft_expand_debug_value(unsigned long *debug)

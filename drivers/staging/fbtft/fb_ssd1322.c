@@ -13,7 +13,7 @@
 #define HEIGHT      64
 #define GAMMA_NUM   1
 #define GAMMA_LEN   15
-#define DEFAULT_GAMMA "1 1 1 1 1 2 2 3 3 4 4 5 5 6 6"
+#define DEFAULT_GAMMA "0 8 8 8 8 8 8 8 8 8 8 8 8 8 8"
 
 static int init_display(struct fbtft_par *par)
 {
@@ -40,7 +40,7 @@ static int init_display(struct fbtft_par *par)
 	write_reg(par, 0xC7, 0x0F);	  /* Master contrast current, 16 steps, default is 0x0F */
 	write_reg(par, 0xB1, 0xF2);	  /* Phase Length */
 	//-1, 0xD1, 0x82, 0x20	          /* Display enhancement B */
-	write_reg(par, 0xBB, 0x1F);	  /* Pre-charge voltage */
+	write_reg(par, 0xBB, 0x0F);	  /* Pre-charge voltage */
 	write_reg(par, 0xBE, 0x04);	  /* Set VCOMH */
 	write_reg(par, 0xA6);		  /* Normal display */
 	write_reg(par, 0xAF);		  /* Display ON */
@@ -94,12 +94,10 @@ static int set_gamma(struct fbtft_par *par, u32 *curves)
 		}
 	}
 
-	//write_reg(par, 0xB8,
-	//0,1,2,3,4,5,6,7,8,
-	//9,10,15,25,30,35);
-	//tmp[0], tmp[1], tmp[2], tmp[3], tmp[4], tmp[5], tmp[6], tmp[7],
-	//tmp[8], tmp[9], tmp[10], tmp[11], tmp[12], tmp[13], tmp[14]);
-	//write_reg(par, 0);
+	write_reg(par, 0xB8,
+	tmp[0], tmp[1], tmp[2], tmp[3], tmp[4], tmp[5], tmp[6], tmp[7],
+	tmp[8], tmp[9], tmp[10], tmp[11], tmp[12], tmp[13], tmp[14]);
+	write_reg(par, 0x00);
 	
 
 	return 0;
