@@ -59,6 +59,11 @@ module_param(gamma, charp, 0000);
 MODULE_PARM_DESC(gamma,
 		 "String representation of Gamma Curve(s). Driver specific.");
 
+static char *precharge;
+module_param(precharge, charp, 0000);
+MODULE_PARM_DESC(precharge,
+		 "String representation of Precharge voltage.");
+
 static int txbuflen;
 module_param(txbuflen, int, 0000);
 MODULE_PARM_DESC(txbuflen, "txbuflen (override driver default)");
@@ -1509,6 +1514,8 @@ static int __init fbtft_device_init(void)
 				pdata->startbyte = startbyte;
 			if (gamma)
 				pdata->gamma = gamma;
+			if (precharge)
+				pdata->precharge = precharge;
 			pdata->display.debug = debug;
 			if (fps)
 				pdata->fps = fps;
