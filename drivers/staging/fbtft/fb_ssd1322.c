@@ -11,9 +11,16 @@
 #define DRVNAME     "fb_ssd1322"
 #define WIDTH       128
 #define HEIGHT      64
+#define BPP         8
 #define GAMMA_NUM   1
 #define GAMMA_LEN   15
 #define DEFAULT_GAMMA "1 1 1 1 1 2 2 3 3 4 4 5 5 6 6"
+
+// The screen's GDDRAM stores pixels in 4-bit grayscale, but the screen can only
+// take one pixel per byte transmitted (in the 1st nibble). So, use an 8 BPP fb
+// device and cairo surface to transfer the data without bitwise operations or
+// the need for a buffer. A8 cairo surfaces will "fit" into the A4 layout w/out
+// any modifications.
 
 static int init_display(struct fbtft_par *par)
 {
@@ -115,51 +122,14 @@ static int blank(struct fbtft_par *par, bool on)
 	return 0;
 }
 
-
-#define CYR     613    /* 2.392 */
-#define CYG     601    /* 2.348 */
-#define CYB     233    /* 0.912 */
-/*static unsigned int rgb565_to_y(unsigned int rgb)
-{
-	rgb = cpu_to_le16(rgb);
-	return CYR * (rgb >> 11) + CYG * (rgb >> 5 & 0x3F) + CYB * (rgb & 0x1F);
-}*/
-
 static int write_vmem(struct fbtft_par *par, size_t offset, size_t len)
 {
-	u16 *vmem16 = (u16 *)par->info->screen_buffer;
-	u8 *buf = par->txbuf.buf;
-	int y, x, bl_height, bl_width;
-	int ret = 0;
+	int ret;
 
 	/* Set data line beforehand */
 	gpiod_set_value(par->gpio.dc, 1);
 
-	/* convert offset to word index from byte index */
-	offset /= 2;
-	bl_width = par->info->var.xres;
-	bl_height = len / par->info->fix.line_length;
-
-	fbtft_par_dbg(DEBUG_WRITE_VMEM, par,
-		"%s(offset=0x%x bl_width=%d bl_height=%d)\n", __func__, offset, bl_width, bl_height);
-
-	//for(y=0;y<256;y++) 
-	//for(x=0,x<8;x++) 
-	//*buf++ = y>>4 | (y&0xf0);
-
-	for (y = 0; y < bl_height; y++) {
-		for (x = 0; x < bl_width; x++) {
-			//*buf++ = cpu_to_le16(rgb565_to_y(vmem16[offset++])) >> 8;
-			//int z = cpu_to_le16(rgb565_to_y(vmem16[offset++])) >> 8;
-			int z = cpu_to_le16(vmem16[offset++]) >> 8;
-			*buf++ = z>>4 | (z&0xf0); 
-			//*buf++ = cpu_to_le16(rgb565_to_y(vmem16[offset++])) >> 8;
-			//*buf++ = cpu_to_le16(vmem16[offset++]) >> 8;
-		}
-	}
-
-	/* Write data */
-	ret = par->fbtftops.write(par, par->txbuf.buf, bl_width*bl_height);
+	ret = par->fbtftops.write(par, par->info->screen_buffer + offset, len);
 	if (ret < 0)
 		dev_err(par->info->device, "%s: write failed and returned: %d\n", __func__, ret);
 
@@ -170,7 +140,8 @@ static struct fbtft_display display = {
 	.regwidth = 8,
 	.width = WIDTH,
 	.height = HEIGHT,
-	.txbuflen = WIDTH*HEIGHT,
+	.bpp = BPP,
+	.txbuflen = -2, // No buffer needed.
 	.gamma_num = GAMMA_NUM,
 	.gamma_len = GAMMA_LEN,
 	.gamma = DEFAULT_GAMMA,
